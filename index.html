@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cash Memo</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Special+Elite&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Brevis&display=swap');
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: auto;
+      padding: 20px;
+      max-width: 800px;
+    }
+
+    .company-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .company-logo {
+      width: 100px;
+      margin: 0 auto;
+      display: block;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-family: 'Brevis', sans-serif;
+    }
+
+    table, th, td {
+      border: 1px solid black;
+    }
+
+    th, td {
+      padding: 8px;
+      text-align: center;
+    }
+
+    .no-print {
+      margin-top: 20px;
+    }
+
+    #bill {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 2px solid #000;
+    }
+
+    #finalDetails {
+      margin-top: 20px;
+      border: 1px solid #444;
+      padding: 10px;
+      font-weight: bold;
+      font-family: 'Special Elite', monospace;
+    }
+
+    #sealContainer {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    #sealContainer img {
+      width: 150px;
+      opacity: 0.6;
+    }
+
+    .top-right-buttons {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+    }
+
+    .top-right-buttons button, .top-right-buttons a {
+      margin-left: 5px;
+      padding: 6px 10px;
+      text-decoration: none;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .top-right-buttons a:hover {
+      background-color: #0056b3;
+    }
+
+    @media print {
+      @page {
+        size: 3in 8in;
+        margin: 0;
+      }
+      body {
+        width: 3in;
+        height: 8in;
+        margin: 0;
+        padding: 10px;
+        font-size: 10px;
+      }
+      .no-print, .top-right-buttons {
+        display: none;
+      }
+    }
+
+    h1.cash-memo-title {
+      text-align: center;
+      font-family: 'Times New Roman', sans-serif;
+    }
+
+    .cash-memo-no {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-family: 'Special Elite', sans-serif;
+    }
+  </style>
+</head>
+<body>
+
+<div class="top-right-buttons no-print">
+  <button onclick="location.reload()">🔄 Refresh</button>
+  <a href="history.html">📜 View History</a>
+</div>
+
+<div id="mainContent">
+  <div class="company-header">
+    <img
+      src="https://assets.onecompiler.app/43j3wx654/43j3wy9a4/WhatsApp%20Image%202025-05-15%20at%2017.01.19_c10f1449.jpg"
+      alt="Company Logo"
+      class="company-logo"
+    />
+    <h2>Card Print Lav</h2>
+    <p>Phone/Bkash/WhatsApp: 01806-018635</p>
+  </div>
+
+  <h1 class="cash-memo-title">Cash Memo</h1>
+
+  <div class="cash-memo-no"><strong>Cash Memo No:</strong> <span id="displyCashmemono"></span></div>
+
+  <div class="no-print">
+    <label>Cash Memo No: <input type="text" id="Cashmemono" oninput="updateDisplay()" /></label><br /><br />
+    <label>Customer Name: <input type="text" id="customerName" oninput="updateDisplay()" /></label><br /><br />
+    <label>Customer Phone: <input type="text" id="customerPhone" oninput="updateDisplay()" /></label><br /><br />
+    <label>Customer Address: <input type="text" id="customerAddress" oninput="updateDisplay()" /></label><br /><br />
+
+    <label>Item: <input type="text" id="itemName" /></label>
+    <label>Quantity: <input type="number" id="itemQty" /></label>
+    <label>Price: <input type="number" id="itemPrice" /></label>
+    <button onclick="addItem()">Add Item</button><br /><br />
+
+    <label>Tax (%): <input type="number" id="tax" value="0" oninput="updateTotals()" /></label><br /><br />
+    <label>Discount (Tk): <input type="number" id="discount" value="0" oninput="updateTotals()" /></label><br /><br />
+    <label>Advance (Tk): <input type="number" id="advance" value="0" oninput="updateTotals()" /></label><br /><br />
+    <label>Payment By: 
+      <select id="paymentMethod" onchange="updateTotals()">
+        <option value="Bkash">Bkash</option>
+        <option value="COD">COD</option>
+      </select>
+    </label><br /><br />
+
+    <button onclick="saveBill()">Save Bill</button>
+    <button onclick="window.print()">Print</button>
+  </div>
+
+  <div id="bill">
+    <p><strong>Customer Name:</strong> <span id="displayCustomerName"></span></p>
+    <p><strong>Phone:</strong> <span id="displayCustomerPhone"></span></p>
+    <p><strong>Address:</strong> <span id="displayCustomerAddress"></span></p>
+
+    <table id="billTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Item</th>
+          <th>Qty</th>
+          <th>Price (Tk)</th>
+          <th>Total (Tk)</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <div id="finalDetails"></div>
+    <div id="sealContainer"></div>
+  </div>
+</div>
+
+<script>
+  let items = [];
+
+  function updateDisplay() {
+    document.getElementById('displyCashmemono').innerText = document.getElementById('Cashmemono').value;
+    document.getElementById('displayCustomerName').innerText = document.getElementById('customerName').value;
+    document.getElementById('displayCustomerPhone').innerText = document.getElementById('customerPhone').value;
+    document.getElementById('displayCustomerAddress').innerText = document.getElementById('customerAddress').value;
+    updateTotals();
+  }
+
+  function addItem() {
+    const name = document.getElementById('itemName').value.trim();
+    const qty = parseFloat(document.getElementById('itemQty').value);
+    const price = parseFloat(document.getElementById('itemPrice').value);
+    if (!name || isNaN(qty) || isNaN(price) || qty <= 0 || price < 0) return alert('Please enter valid item details.');
+    items.push({ name, qty, price });
+    updateTable();
+    updateTotals();
+    document.getElementById('itemName').value = '';
+    document.getElementById('itemQty').value = '';
+    document.getElementById('itemPrice').value = '';
+  }
+
+  function updateTable() {
+    const tbody = document.querySelector('#billTable tbody');
+    tbody.innerHTML = '';
+    items.forEach((item, index) => {
+      const total = (item.qty * item.price).toFixed(2);
+      const row = `<tr><td>${index + 1}</td><td>${item.name}</td><td>${item.qty}</td><td>${item.price.toFixed(2)}</td><td>${total}</td></tr>`;
+      tbody.innerHTML += row;
+    });
+  }
+
+  function updateTotals() {
+    const tax = parseFloat(document.getElementById('tax').value) || 0;
+    const discount = parseFloat(document.getElementById('discount').value) || 0;
+    const advance = parseFloat(document.getElementById('advance').value) || 0;
+
+    const subtotal = items.reduce((sum, item) => sum + item.qty * item.price, 0);
+    const taxAmt = subtotal * tax / 100;
+    const grandTotal = subtotal + taxAmt - discount;
+    const toReceive = grandTotal - advance;
+
+    document.getElementById('finalDetails').innerHTML = `
+      Subtotal: Tk ${subtotal.toFixed(2)}<br />
+      Tax: Tk ${taxAmt.toFixed(2)}<br />
+      Discount: Tk ${discount.toFixed(2)}<br />
+      Advance: Tk ${advance.toFixed(2)}<br />
+      <strong>To Receive: Tk ${toReceive.toFixed(2)}</strong><br />
+      Payment By: ${document.getElementById('paymentMethod').value}
+    `;
+
+    const sealImg = toReceive <= 0
+      ? 'https://img.freepik.com/premium-vector/paid-letter-rubber-stamp-template_29794-1357.jpg?w=740'
+      : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR4EiBXHKEssb18DQ58On9Bq18lS1mUtHsm0g&s';
+    document.getElementById('sealContainer').innerHTML = `<img src="${sealImg}" alt="Seal" />`;
+  }
+
+  function saveBill() {
+    if (!document.getElementById('Cashmemono').value) return alert('Please enter Cash Memo No.');
+    if (items.length === 0) return alert('Add at least one item.');
+
+    const billData = {
+      cashMemoNo: document.getElementById('Cashmemono').value,
+      customerName: document.getElementById('customerName').value,
+      customerPhone: document.getElementById('customerPhone').value,
+      customerAddress: document.getElementById('customerAddress').value,
+      items: items,
+      tax: parseFloat(document.getElementById('tax').value) || 0,
+      discount: parseFloat(document.getElementById('discount').value) || 0,
+      advance: parseFloat(document.getElementById('advance').value) || 0,
+      paymentMethod: document.getElementById('paymentMethod').value,
+      date: new Date().toISOString(),
+    };
+
+    let bills = JSON.parse(localStorage.getItem('bills') || '[]');
+    bills.push(billData);
+    localStorage.setItem('bills', JSON.stringify(bills));
+    alert('Bill saved successfully!');
+  }
+</script>
+
+</body>
+</html>
