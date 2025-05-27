@@ -1,0 +1,101 @@
+<!-- Save this as: history.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Order History - Card Print Lav</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 1000px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+    }
+    .order {
+      border: 1px solid #aaa;
+      margin-bottom: 20px;
+      padding: 15px;
+      border-radius: 8px;
+    }
+    .order table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    .order table, .order th, .order td {
+      border: 1px solid #ccc;
+    }
+    .order th, .order td {
+      padding: 6px;
+      text-align: center;
+    }
+    .top-nav {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .top-nav a {
+      text-decoration: none;
+      background: #007BFF;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="top-nav">
+  <a href="index (4).html">← Back to Memo</a>
+</div>
+
+<h1>Order History</h1>
+
+<div id="historyContainer"></div>
+
+<script>
+  const container = document.getElementById('historyContainer');
+  const bills = JSON.parse(localStorage.getItem('bills') || '[]');
+
+  if (bills.length === 0) {
+    container.innerHTML = "<p>No bills saved.</p>";
+  } else {
+    bills.forEach((bill, index) => {
+      const itemsHTML = bill.items.map((item, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${item.name}</td>
+          <td>${item.qty}</td>
+          <td>${item.price.toFixed(2)}</td>
+          <td>${(item.qty * item.price).toFixed(2)}</td>
+        </tr>
+      `).join('');
+
+      const total = bill.items.reduce((sum, i) => sum + i.qty * i.price, 0);
+      const taxAmt = total * bill.tax / 100;
+      const grand = total + taxAmt - bill.discount;
+      const due = grand - bill.advance;
+
+      container.innerHTML += `
+        <div class="order">
+          <h3>Memo No: ${bill.cashMemoNo} | Date: ${new Date(bill.date).toLocaleString()}</h3>
+          <p><strong>Customer:</strong> ${bill.customerName} | <strong>Phone:</strong> ${bill.customerPhone}</p>
+          <p><strong>Address:</strong> ${bill.customerAddress}</p>
+          <table>
+            <thead>
+              <tr><th>#</th><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr>
+            </thead>
+            <tbody>${itemsHTML}</tbody>
+          </table>
+          <p><strong>Subtotal:</strong> Tk ${total.toFixed(2)} | <strong>Tax:</strong> Tk ${taxAmt.toFixed(2)} | <strong>Discount:</strong> Tk ${bill.discount.toFixed(2)} | <strong>Advance:</strong> Tk ${bill.advance.toFixed(2)}</p>
+          <p><strong>Total Due:</strong> Tk ${due.toFixed(2)} | <strong>Payment By:</strong> ${bill.paymentMethod}</p>
+        </div>
+      `;
+    });
+  }
+</script>
+
+</body>
+</html>
